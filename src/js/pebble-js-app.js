@@ -14,7 +14,7 @@ function updateWeather() {
   if (!updateInProgress) {
     updateInProgress = true;
     var locationOptions = { "timeout": 15000, "maximumAge": 60000 };
-    window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
+    navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
   }
   else {
     console.log("Not starting a new request. Another one is in progress...");
@@ -47,7 +47,7 @@ function fetchWeather(latitude, longitude) {
         if (response && response.list && response.list.length > 0) {
           var weatherResult = response.list[0];
           temperature = Math.round(weatherResult.main.temp - 273.15);
-          condition = weatherResult.weather[0].id;
+          var condition = weatherResult.weather[0].id;
 
           console.log("Temperature: " + temperature + " Condition: " + condition);
           Pebble.sendAppMessage({
@@ -62,7 +62,7 @@ function fetchWeather(latitude, longitude) {
         Pebble.sendAppMessage({ "error": "HTTP Error" });
       }
     }
-  }
+  };
   req.send(null);
 }
 

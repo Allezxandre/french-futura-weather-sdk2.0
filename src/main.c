@@ -16,7 +16,8 @@ static TextLayer *date_layer;
 static TextLayer *time_layer;
 static WeatherLayer *weather_layer;
 
-static char date_text[] = "XXX 00";
+// Need to be static because pointers to them are stored in the text layers
+	    static char date_text[] = "JJJ 00 XXX";
 static char time_text[] = "00:00";
 
 /* Preload the fonts */
@@ -33,9 +34,91 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   if (units_changed & DAY_UNIT) {
     // Update the date - Without a leading 0 on the day of the month
     char day_text[4];
-    strftime(day_text, sizeof(day_text), "%a", tick_time);
-    snprintf(date_text, sizeof(date_text), "%s %i", day_text, tick_time->tm_mday);
-    text_layer_set_text(date_layer, date_text);
+	char month_text[3];
+	//strftime(date_text,sizeof(date_text), "%a %d %b", tick_time);
+    //text_layer_set_text(date_layer, date_text);
+	  
+	  // Primitive hack to translate the day of week to another language
+			// Needs to be exactly 3 characters, e.g. "Mon" or "Mo "
+			// Supported characters: A-Z, a-z, 0-9
+			strftime(day_text, sizeof(day_text), "%a", tick_time);
+	  
+			if (day_text[0] == 'M')
+			{
+				memcpy(&date_text, "Lun", 3); // Monday
+			}
+			
+			if (day_text[0] == 'T' && day_text[1] == 'u')
+			{
+				memcpy(&day_text, "Mar", 3); // Tuesday
+			}
+			
+			if (day_text[0] == 'W')
+			{
+				memcpy(&day_text, "Mer", 3); // Wednesday
+			}
+			
+			if (day_text[0] == 'T' && day_text[1] == 'h')
+			{
+				memcpy(&day_text, "Jeu", 3); // Thursday
+			}
+			
+			if (day_text[0] == 'F')
+			{
+				memcpy(&day_text, "Ven", 3); // Friday
+			}
+			
+			if (day_text[0] == 'S' && day_text[1] == 'a')
+			{
+				memcpy(&day_text, "Sam", 3); // Saturday
+			}
+			
+			if (day_text[0] == 'S' && day_text[1] == 'u')
+			{
+				memcpy(&day_text, "Dim", 3); // Sunday
+			}
+			
+			strftime(month_text, sizeof(month_text), "%b", tick_time);
+			 
+			//Primitive Hack to translate month - Only a few are translated because in french, most of the beginnings are similar to english
+			if (month_text[0] == 'F')
+			{
+				memmove(&month_text[0], "Fev", sizeof(month_text)); // Fevrier
+			}
+			
+			if (month_text[0] == 'A' && month_text[2] == 'r')
+			{
+				memmove(&month_text[0], "Avr", sizeof(month_text)); // Avril
+			}
+			
+			if (month_text[0] == 'M' && month_text[2] == 'y')
+			{
+				memmove(&month_text[0], "Mai", sizeof(month_text)); // Mai
+			}
+			
+			if (month_text[0] == 'A' && month_text[2] == 'g')
+			{
+				memmove(&month_text[0], "Aou", sizeof(month_text)); // Aout
+			}
+			
+			
+			
+			//  strcat(date_text, month_text);	//Don't need it anymore ! 
+				
+			/*if (date_text[4] == '0') {
+			    // Hack to get rid of the leading zero of the day of month
+	            memmove(&date_text[4], &date_text[5], sizeof(date_text) - 1);
+			    }
+			*/
+			
+			
+			// Uncomment the line below if your labels consist of 2 characters and 1 space, e.g. "Mo "
+			//memmove(&date_text[3], &date_text[4], sizeof(date_text) - 1);
+			
+			
+    		snprintf(date_text, sizeof(date_text), "%s %i %s", day_text, tick_time->tm_mday, month_text);
+			
+	        text_layer_set_text(date_layer, date_text);
   }
 
   // Update the bottom half of the screen: icon and temperature
