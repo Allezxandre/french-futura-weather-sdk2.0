@@ -24,7 +24,7 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
   }
   else if (error_tuple) {
     weather->error = WEATHER_E_NETWORK;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Got error %s", error_tuple->value->cstring);
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Got error %s", error_tuple->value->cstring);
   }
   else {
     weather->error = WEATHER_E_PHONE;
@@ -33,8 +33,6 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
 	  if (error_tuple == 0x0 && config_tuple != 0x0) {
 		  APP_LOG(APP_LOG_LEVEL_INFO, "I'll ignore and fetch weather, because VibeOnHour was returned");
 		  request_weather();
-		  weather->error = WEATHER_E_OK;
-		  weather->updated = time(NULL);
 							   }
   }
 }

@@ -43,17 +43,17 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   if (units_changed & MINUTE_UNIT) {
     // Update the time - Deal with 12 / 24 format
     clock_copy_time_string(time_text, sizeof(time_text));
+	 APP_LOG(APP_LOG_LEVEL_INFO, "-------------- Time is %s --------------",time_text);
     text_layer_set_text(time_layer, time_text);
-	  APP_LOG(APP_LOG_LEVEL_INFO, "VibeOnHour is set to %i", VibeOnHour);
+	  APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour is set to %i", VibeOnHour);
 	  int heure = tick_time->tm_hour;
-	  if (VibeOnHour == 1) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour test succesfull!");
-  if (((units_changed & HOUR_UNIT) == HOUR_UNIT) && ((heure > 9) && (heure < 23))) {
+  if (((units_changed & HOUR_UNIT) == HOUR_UNIT) && ((heure > 9) && (heure < 23)) && (VibeOnHour == 1)) {
     vibes_double_pulse();
     APP_LOG(APP_LOG_LEVEL_INFO, "Hour changed -> Vibration complete");
   } else {APP_LOG(APP_LOG_LEVEL_INFO, "However, Hour Unit did not change, no vibration");}
 	  
-	                      }
+	                      
   }
 	
   if (units_changed & DAY_UNIT) {
@@ -142,7 +142,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 			
 			
     		snprintf(date_text, sizeof(date_text), "%s %i %s", day_text, tick_time->tm_mday, month_text);
-			  APP_LOG(APP_LOG_LEVEL_DEBUG, "Displayed time. Vibe is at %i", VibeOnHour);
+			  APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date");
 	        text_layer_set_text(date_layer, date_text);
   }
 
