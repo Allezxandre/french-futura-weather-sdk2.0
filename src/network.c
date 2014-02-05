@@ -1,6 +1,8 @@
 #include <pebble.h>
 #include "network.h"
 
+int VibeOnHour = -1;
+	
 static void appmsg_in_received(DictionaryIterator *received, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "In received.");
 
@@ -15,7 +17,7 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
     weather->temperature = temperature_tuple->value->int32;
     weather->condition = condition_tuple->value->int32;
 	VibeOnHour = config_tuple->value->int8;
-	    APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour is set to %i. And now is to %i", config_tuple->value->int8, VibeOnHour);
+	    APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour has been set to %i in network file", config_tuple->value->int8);
     weather->error = WEATHER_E_OK;
     weather->updated = time(NULL);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got temperature %i and condition %i", weather->temperature, weather->condition);
@@ -26,11 +28,13 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
   }
   else {
     weather->error = WEATHER_E_PHONE;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Got message with unknown keys... temperature=%p condition=%p error=%p",
+    APP_LOG(APP_LOG_LEVEL_WARNING, "Got message with unknown keys... temperature=%p condition=%p error=%p",
       temperature_tuple, condition_tuple, error_tuple);
-	  if (error_tuple == 0x0) {
-		  APP_LOG(APP_LOG_LEVEL_DEBUG, "I'll ignore and fetch weather");
-		  request_weather(); 
+	  if (error_tuple == 0x0 && config_tuple != 0x0) {
+		  APP_LOG(APP_LOG_LEVEL_INFO, "I'll ignore and fetch weather, because VibeOnHour was returned");
+		  request_weather();
+		  weather->error = WEATHER_E_OK;
+		  weather->updated = time(NULL);
 							   }
   }
 }

@@ -13,9 +13,9 @@ enum {
 	VIBE_ON_HOUR_KEY = 5
 };
 */
-static int VibeOnHour = -1;
 	
-
+extern int VibeOnHour; //extern to be able to use it in main.c, as well as in network.c (don't forget to declare it in .c as well)
+	
 typedef enum {
   WEATHER_E_OK = 0,
   WEATHER_E_DISCONNECTED,

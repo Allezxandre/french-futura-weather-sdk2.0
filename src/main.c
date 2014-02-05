@@ -44,13 +44,14 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     // Update the time - Deal with 12 / 24 format
     clock_copy_time_string(time_text, sizeof(time_text));
     text_layer_set_text(time_layer, time_text);
-	  
+	  APP_LOG(APP_LOG_LEVEL_INFO, "VibeOnHour is set to %i", VibeOnHour);
 	  int heure = tick_time->tm_hour;
 	  if (VibeOnHour == 1) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour test succesfull!");
   if (((units_changed & HOUR_UNIT) == HOUR_UNIT) && ((heure > 9) && (heure < 23))) {
     vibes_double_pulse();
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Hour changed -> Vibration complete");
-  }
+    APP_LOG(APP_LOG_LEVEL_INFO, "Hour changed -> Vibration complete");
+  } else {APP_LOG(APP_LOG_LEVEL_INFO, "However, Hour Unit did not change, no vibration");}
 	  
 	                      }
   }
@@ -180,14 +181,15 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       bool night_time = false;
       if (tick_time->tm_hour >= 19 || tick_time->tm_hour < 7)
         night_time = true;
-      weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
+    APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "Set Weather icon. I do this every second, even though I don't fetch weather");
+	weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
     }
   }
 
   // Refresh the weather info every 15 minutes
   if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0)
   {
-	  APP_LOG(APP_LOG_LEVEL_DEBUG, "Main here, I just requested Weather for timely refresh");
+	  APP_LOG(APP_LOG_LEVEL_INFO, "Main here, I just requested Weather for timely refresh");
     request_weather();
   }
 }
@@ -220,10 +222,8 @@ static void init(void) {
   // Add weather layer
   weather_layer = weather_layer_create(GRect(0, 90, 144, 80));
   layer_add_child(window_get_root_layer(window), weather_layer);
+
 	
-//Initialize Tuplet
-	 /* APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialize Tuple with value 1 for Vibe");
-	Tuplet initial_values[] = {TupletInteger(VIBE_ON_HOUR_KEY, 1)};*/
   // Update the screen right away
   time_t now = time(NULL);
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
