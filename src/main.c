@@ -24,13 +24,37 @@ static char time_text[] = "00:00";
 GFont font_date;
 GFont font_time;
 
+
+
+/* Sync Callback
+static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tuple, const Tuple* old_tuple, void* context) {
+  switch (key) {
+    case VIBE_ON_HOUR_KEY:
+      VibeOnHour = new_tuple->value->uint8;
+	    APP_LOG(APP_LOG_LEVEL_DEBUG, "Received VibeOnHour. Value is %i", VibeOnHour);
+      break;
+  }
+}*/
+
+
+
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 {
   if (units_changed & MINUTE_UNIT) {
     // Update the time - Deal with 12 / 24 format
     clock_copy_time_string(time_text, sizeof(time_text));
     text_layer_set_text(time_layer, time_text);
+	  
+	  int heure = tick_time->tm_hour;
+	  if (VibeOnHour == 1) {
+  if (((units_changed & HOUR_UNIT) == HOUR_UNIT) && ((heure > 9) && (heure < 23))) {
+    vibes_double_pulse();
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Hour changed -> Vibration complete");
   }
+	  
+	                      }
+  }
+	
   if (units_changed & DAY_UNIT) {
     // Update the date - Without a leading 0 on the day of the month
     char day_text[4];
@@ -117,7 +141,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 			
 			
     		snprintf(date_text, sizeof(date_text), "%s %i %s", day_text, tick_time->tm_mday, month_text);
-			
+			  APP_LOG(APP_LOG_LEVEL_DEBUG, "Displayed time. Vibe is at %i", VibeOnHour);
 	        text_layer_set_text(date_layer, date_text);
   }
 
@@ -128,6 +152,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     // 'Animate' loading icon until the first successful weather request
     if (animation_step == 0) {
       weather_layer_set_icon(weather_layer, WEATHER_ICON_LOADING1);
+	  //APP_LOG(APP_LOG_LEVEL_DEBUG, "---Loading...");
     }
     else if (animation_step == 1) {
       weather_layer_set_icon(weather_layer, WEATHER_ICON_LOADING2);
@@ -162,6 +187,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   // Refresh the weather info every 15 minutes
   if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0)
   {
+	  APP_LOG(APP_LOG_LEVEL_DEBUG, "Main here, I just requested Weather for timely refresh");
     request_weather();
   }
 }
@@ -194,12 +220,18 @@ static void init(void) {
   // Add weather layer
   weather_layer = weather_layer_create(GRect(0, 90, 144, 80));
   layer_add_child(window_get_root_layer(window), weather_layer);
-
+	
+//Initialize Tuplet
+	 /* APP_LOG(APP_LOG_LEVEL_DEBUG, "Initialize Tuple with value 1 for Vibe");
+	Tuplet initial_values[] = {TupletInteger(VIBE_ON_HOUR_KEY, 1)};*/
   // Update the screen right away
   time_t now = time(NULL);
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
   // And then every second
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+// Prepare Sync	
+	//app_sync_init(&sync, sync_buffer, sizeof(sync_buffer), initial_values, ARRAY_LENGTH(initial_values),sync_tuple_changed_callback, NULL, NULL);
+	 APP_LOG(APP_LOG_LEVEL_DEBUG, "Init finished. Vibe is set to %i", VibeOnHour);
 }
 
 static void deinit(void) {

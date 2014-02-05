@@ -1,19 +1,21 @@
 {
-    "versionLabel": "2.0.2",
+    "versionLabel": "2.1",
     "uuid": "79dabfb6-e225-462c-879f-859089f0646f",
     "appKeys": {
+        "VibeOnHour": 5,
         "error": 2,
         "temperature": 0,
         "condition": 1,
         "request_update": 42
     },
     "longName": "Futura Weather FR",
-    "versionCode": 7,
+    "versionCode": 8,
     "capabilities": [
-        "location"
+        "location",
+        "configurable"
     ],
     "shortName": "FuturaWeather",
-    "companyName": "Pebble Community",
+    "companyName": "Alexandre Jouandin",
     "watchapp": {
         "watchface": true
     },

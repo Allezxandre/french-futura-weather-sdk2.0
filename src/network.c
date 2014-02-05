@@ -8,11 +8,14 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
 
   Tuple *temperature_tuple = dict_find(received, KEY_TEMPERATURE);
   Tuple *condition_tuple = dict_find(received, KEY_CONDITION);
+  Tuple *config_tuple = dict_find(received, VIBE_ON_HOUR_KEY);
   Tuple *error_tuple = dict_find(received, KEY_ERROR);
 
   if (temperature_tuple && condition_tuple) {
     weather->temperature = temperature_tuple->value->int32;
     weather->condition = condition_tuple->value->int32;
+	VibeOnHour = config_tuple->value->int8;
+	    APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour is set to %i. And now is to %i", config_tuple->value->int8, VibeOnHour);
     weather->error = WEATHER_E_OK;
     weather->updated = time(NULL);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got temperature %i and condition %i", weather->temperature, weather->condition);
@@ -25,6 +28,10 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
     weather->error = WEATHER_E_PHONE;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got message with unknown keys... temperature=%p condition=%p error=%p",
       temperature_tuple, condition_tuple, error_tuple);
+	  if (error_tuple == 0x0) {
+		  APP_LOG(APP_LOG_LEVEL_DEBUG, "I'll ignore and fetch weather");
+		  request_weather(); 
+							   }
   }
 }
 
@@ -81,9 +88,11 @@ void close_network()
 
 void request_weather()
 {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Roger! Weather request received. Starting....");
   DictionaryIterator *iter;
+APP_LOG(APP_LOG_LEVEL_DEBUG, "Dictionnary");
   app_message_outbox_begin(&iter);
-
+APP_LOG(APP_LOG_LEVEL_DEBUG, "App_Message_Outbox");
   dict_write_uint8(iter, KEY_REQUEST_UPDATE, 42);
 
   app_message_outbox_send();

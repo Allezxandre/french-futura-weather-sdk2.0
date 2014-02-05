@@ -133,29 +133,36 @@ uint8_t weather_icon_for_condition(int c, bool night_time) {
   // Thunderstorm
   if (c < 300) {
     return WEATHER_ICON_THUNDER;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather is Thunderous");
   }
   // Drizzle
   else if (c < 500) {
     return WEATHER_ICON_DRIZZLE;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Drizzle");
   }
   // Rain / Freezing rain / Shower rain
   else if (c < 600) {
     return WEATHER_ICON_RAIN;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Rain");
   }
   // Snow
   else if (c < 700) {
     return WEATHER_ICON_SNOW;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Snow");
   }
   // Fog / Mist / Haze / etc.
   else if (c < 771) {
     return WEATHER_ICON_FOG;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Fog");
   }
   // Tornado / Squalls
   else if (c < 800) {
     return WEATHER_ICON_WIND;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Wind");
   }
   // Sky is clear
   else if (c == 800) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Clear");
     if (night_time)
       return WEATHER_ICON_CLEAR_NIGHT;
     else
@@ -163,6 +170,7 @@ uint8_t weather_icon_for_condition(int c, bool night_time) {
   }
   // few/scattered/broken clouds
   else if (c < 804) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Partly Cloudy");
     if (night_time)
       return WEATHER_ICON_PARTLY_CLOUDY_NIGHT;
     else
@@ -170,22 +178,27 @@ uint8_t weather_icon_for_condition(int c, bool night_time) {
   }
   // overcast clouds
   else if (c == 804) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Cloudy");
     return WEATHER_ICON_CLOUDY;
   }
   // Extreme
   else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "No come on ! Weather is Extreme WIND ?");
     return WEATHER_ICON_WIND;
   }
   // Cold
   else if (c == 903) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Cold");
       return WEATHER_ICON_COLD;
   }
   // Hot
   else if (c == 904) {
       return WEATHER_ICON_HOT;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather : Hot");
   }
   else {
     // Weather condition not available
     return WEATHER_ICON_NOT_AVAILABLE;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Weather is unavailable : All tests failed");
   }
 }

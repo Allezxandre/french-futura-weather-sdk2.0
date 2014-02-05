@@ -8,6 +8,32 @@ Pebble.addEventListener("appmessage", function(e) {
   updateWeather();
 });
 
+var mConfig = {};
+
+Pebble.addEventListener("ready", function(e) {
+        console.log("Starting Configuration fetch");
+  loadLocalData();
+  returnConfigToPebble();
+});
+
+Pebble.addEventListener("showConfiguration", function(e) {
+		console.log("Opening URL");
+        Pebble.openURL(mConfig.configureUrl);
+	
+});
+
+Pebble.addEventListener("webviewclosed",
+  function(e) {
+    if (e.response) {
+      var config = JSON.parse(e.response);
+      saveLocalData(config);
+      console.log("Saved config");
+      returnConfigToPebble();
+      console.log("Returned config to Pebble");
+    }
+  }
+);
+
 var updateInProgress = false;
 
 function updateWeather() {
@@ -33,6 +59,7 @@ function locationError(err) {
   updateInProgress = false;
 }
 
+
 function fetchWeather(latitude, longitude) {
   var response;
   var req = new XMLHttpRequest();
@@ -43,7 +70,7 @@ function fetchWeather(latitude, longitude) {
       if(req.status == 200) {
         console.log(req.responseText);
         response = JSON.parse(req.responseText);
-        var temperature, icon, city;
+        var temperature; //icon, city;
         if (response && response.list && response.list.length > 0) {
           var weatherResult = response.list[0];
           temperature = Math.round(weatherResult.main.temp - 273.15);
@@ -52,8 +79,10 @@ function fetchWeather(latitude, longitude) {
           console.log("Temperature: " + temperature + " Condition: " + condition);
           Pebble.sendAppMessage({
             "condition": condition,
-            "temperature": temperature
+            "temperature": temperature,
+			"VibeOnHour":parseInt(mConfig.VibeOnHour)
           });
+			console.log("Sent Weather to Pebble");
           updateInProgress = false;
         }
       } else {
@@ -68,3 +97,38 @@ function fetchWeather(latitude, longitude) {
 
 
 
+// ————————————————————————————————————————————————————————————————————————         Config Page 
+
+
+function saveLocalData(config) {
+
+  console.log("saveLocalData() " + JSON.stringify(config));
+
+  localStorage.setItem("VibeOnHour", parseInt(config.VibeOnHour)); 
+  
+  loadLocalData();
+
+}
+function loadLocalData() {
+  console.log("Retrieving data, please wait...");
+  mConfig.VibeOnHour = parseInt(localStorage.getItem("VibeOnHour"));
+  mConfig.configureUrl = "http://www.jouandin.com/index.html";
+  console.log("Done !");
+
+  console.log("loadLocalData() " + JSON.stringify(mConfig));
+}
+
+function returnConfigToPebble(temperature,condition) {
+  console.log("Configuration window returned: " + JSON.stringify(mConfig));
+	
+	console.log("Temperature: " + temperature + " Condition: " + condition);
+          Pebble.sendAppMessage({
+            "condition": condition,
+            "temperature": temperature,
+			"VibeOnHour":parseInt(mConfig.VibeOnHour)
+          });
+			console.log("Sent Weather to Pebble");
+		/*Pebble.sendAppMessage({
+    "VibeOnHour":parseInt(mConfig.VibeOnHour)
+	});  */
+}
