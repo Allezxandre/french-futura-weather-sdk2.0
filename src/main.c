@@ -25,8 +25,8 @@ GFont font_date;
 GFont font_time;
 
 // Lists of days and months
-const char day_of_week[7][3] = {"Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"};
-const char month_of_year[12][4] = { "Janv", "Fevr", "Mars", "Avr", "Mai", "Juin", "Juil", "Aout", "Sept", "Oct", "Nov", "Dec"};
+const char *day_of_week[] = {"Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"};
+const char *month_of_year[] = { "Janv", "Fevr", "Mars", "Avr", "Mai", "Juin", "Juil", "Aout", "Sept", "Oct", "Nov", "Dec"};
 
 
 
@@ -38,14 +38,16 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 	 APP_LOG(APP_LOG_LEVEL_INFO, "-------------- Time is %s --------------",time_text);
     text_layer_set_text(time_layer, time_text);
 	  APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour is set to %i", VibeOnHour);
-	  	int heure = tick_time->tm_hour;
+	  	static int heure; 
+		 heure = tick_time->tm_hour;
   		if (((units_changed & HOUR_UNIT) == HOUR_UNIT) && ((heure > 9) && (heure < 23)) && (VibeOnHour == 1)) {
     	vibes_double_pulse();
   		}
 	  
-    // Update the date - Without a leading 0 on the day of the month
-    int day_int = tick_time->tm_wday;
-	int month_int = tick_time->tm_mon;
+    static int day_int;
+	  day_int= tick_time->tm_wday;
+	static int month_int;
+	  month_int = tick_time->tm_mon;
 	snprintf(date_text, sizeof(date_text), "%s %i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
 		APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date");
 	text_layer_set_text(date_layer, date_text);
