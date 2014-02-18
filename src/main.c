@@ -17,24 +17,15 @@ static TextLayer *time_layer;
 static WeatherLayer *weather_layer;
 
 // Need to be static because pointers to them are stored in the text layers
-	    static char date_text[] = "JJJ 00 XXX";
+static char date_text[] = "JJJ 00 XXX";
 static char time_text[] = "00:00";
 
 /* Preload the fonts */
 GFont font_date;
 GFont font_time;
 
+// Lists of days and months
 
-
-/* Sync Callback
-static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tuple, const Tuple* old_tuple, void* context) {
-  switch (key) {
-    case VIBE_ON_HOUR_KEY:
-      VibeOnHour = new_tuple->value->uint8;
-	    APP_LOG(APP_LOG_LEVEL_DEBUG, "Received VibeOnHour. Value is %i", VibeOnHour);
-      break;
-  }
-}*/
 
 
 
@@ -47,16 +38,10 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     text_layer_set_text(time_layer, time_text);
 	  APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour is set to %i", VibeOnHour);
 	  int heure = tick_time->tm_hour;
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour test succesfull!");
   if (((units_changed & HOUR_UNIT) == HOUR_UNIT) && ((heure > 9) && (heure < 23)) && (VibeOnHour == 1)) {
     vibes_double_pulse();
-    APP_LOG(APP_LOG_LEVEL_INFO, "Hour changed -> Vibration complete");
-  } else {APP_LOG(APP_LOG_LEVEL_INFO, "However, Hour Unit did not change, no vibration");}
-	  
-	                      
   }
-	
-  if (units_changed & DAY_UNIT) {
+	  
     // Update the date - Without a leading 0 on the day of the month
     char day_text[4];
 	char month_text[3];
@@ -129,17 +114,17 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 			
 			
 			//  strcat(date_text, month_text);	//Don't need it anymore ! 
-				
-			/*if (date_text[4] == '0') {
+			
+			if (date_text[4] == '0') {
 			    // Hack to get rid of the leading zero of the day of month
 	            memmove(&date_text[4], &date_text[5], sizeof(date_text) - 1);
-			    }
-			*/
+			    }  
+				
+				
 			
 			
 			// Uncomment the line below if your labels consist of 2 characters and 1 space, e.g. "Mo "
 			//memmove(&date_text[3], &date_text[4], sizeof(date_text) - 1);
-			
 			
     		snprintf(date_text, sizeof(date_text), "%s %i %s", day_text, tick_time->tm_mday, month_text);
 			  APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date");
