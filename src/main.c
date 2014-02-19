@@ -93,7 +93,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       bool night_time = false;
       if (tick_time->tm_hour >= 19 || tick_time->tm_hour < 7)
         night_time = true;
-    APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "Set Weather icon. I do this every second, even though I don't fetch weather, and that's normal");
+    // APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "Set Weather icon. I do this every second, even though I don't fetch weather, and that's normal");
 	weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
     }
   }
