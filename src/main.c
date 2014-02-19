@@ -57,7 +57,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 	 month_int = tick_time->tm_mon;
     // Print the result
 	snprintf(date_text, sizeof(date_text), "%s %i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
-	 APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date : [%s %i %s]", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]
+	 APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date : [%s %i %s]", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
 	text_layer_set_text(date_layer, date_text);
   }
 
