@@ -25,8 +25,11 @@ GFont font_date;
 GFont font_time;
 
 // Lists of days and months
+          // Translation for DAYS goes here, starting on SUNDAY :
 const char *day_of_week[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
-const char *month_of_year[] = { "Janv", "Fevr", "Mars", "Avr", "Mai", "Juin", "Juil", "Aout", "Sept", "Oct", "Nov", "Dec"};
+
+          // Translation for MONTHS goes here :
+const char *month_of_year[] = { "Janv", "Fevr", "Mars", "Avr", "Mai", "Juin", "Juil", "Aout", "Sept", "Oct", "Nov", "Dec"};   
 
 
 
@@ -54,7 +57,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 	 month_int = tick_time->tm_mon;
     // Print the result
 	snprintf(date_text, sizeof(date_text), "%s %i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
-	 APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date");
+	 APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date : [%s %i %s]", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]
 	text_layer_set_text(date_layer, date_text);
   }
 
