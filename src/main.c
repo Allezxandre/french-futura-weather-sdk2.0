@@ -17,7 +17,7 @@ static TextLayer *time_layer;
 static WeatherLayer *weather_layer;
 
 // Need to be static because pointers to them are stored in the text layers
-static char date_text[] = "DAY 00 MONT";
+static char date_text[] = "DAY ## MMMM";
 static char time_text[] = "00:00";
 
 /* Preload the fonts */
@@ -44,12 +44,17 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     	vibes_double_pulse();
   		}
 	  
-    static int day_int;
-	  day_int= tick_time->tm_wday;
+  }
+  
+  if (units_changed & DAY_UNIT) { 
+    // Get the day and month as int
+  static int day_int;
+	 day_int = tick_time->tm_wday;
 	static int month_int;
-	  month_int = tick_time->tm_mon;
+	 month_int = tick_time->tm_mon;
+    // Print the result
 	snprintf(date_text, sizeof(date_text), "%s %i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
-		APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date");
+	 APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date");
 	text_layer_set_text(date_layer, date_text);
   }
 
