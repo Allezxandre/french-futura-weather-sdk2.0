@@ -112,7 +112,7 @@ function saveLocalData(config) {
 function loadLocalData() {
   console.log("Retrieving data, please wait...");
   mConfig.VibeOnHour = parseInt(localStorage.getItem("VibeOnHour"));
-  mConfig.configureUrl = "http://www.jouandin.com/index.html";
+  mConfig.configureUrl = "http://jouandin.com/PebbleConfig.html";
   console.log("Done !");
 
   console.log("loadLocalData() " + JSON.stringify(mConfig));
