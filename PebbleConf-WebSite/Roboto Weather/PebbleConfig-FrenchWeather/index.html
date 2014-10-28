@@ -1,0 +1,84 @@
+<html><head>
+  <title>French Weather</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" >
+  
+  <link href="css/bootstrap.min.css" rel="stylesheet" >
+  <link href="css/bootstrap-theme.min.css" rel="stylesheet" >
+
+  <script type="text/javascript" src="js/jquery.min.js" ></script>
+  <script type="text/javascript" src="js/bootstrap.min.js" ></script>
+</head>
+	<body>
+    <div class="container" >
+
+      <h2>French Futura Weather</h2>
+      
+      <form id="configure-form" class="form-configure well" action="#" method="POST" >
+        <h4>Vibration chaque heure</h4>
+        <p><small>Vibre chaque heure entre 10 heures et 22 heures (inclus)</small></p>
+        <div class="btn-group" data-toggle="buttons" >
+          <label class="btn btn-primary" >
+            <input type="radio" name="VibeOnHour" id="VibeOnHour1" value="1" /> Oui
+          </label>
+          <label class="btn btn-primary" >
+            <input type="radio" name="VibeOnHour" id="VibeOnHour2" value="0" /> Non
+          </label>
+        </div>
+        <hr/>
+                <div class="clearfix" >
+          <input class="btn btn-lg btn-primary btn-block" id="save" type="submit" value="Sauvegarder" />
+        </div>
+      </form>
+    </div>
+
+    <div class="footer container" >
+      <p>French Futura Weather. Original config page by orviwan</p>
+    </div>
+    
+    <script>
+      var mVibe;
+      
+      $().ready(function () {
+
+        mVibe = parseInt(localStorage.getItem("VibeOnHour"));
+
+        if(isNaN(mVibe)) {
+          mVibe = 1;      
+        }
+        
+        if (mVibe) {
+          $('#VibeOnHour1').prop('checked', true);
+          $('#VibeOnHour1').parent().addClass('active');
+          
+          $('#VibeOnHour2').prop('checked', false);
+          $('#VibeOnHour2').parent().removeClass('active');
+        } 
+        else {
+          $('#VibeOnHour1').prop('checked', false);
+          $('#VibeOnHour1').parent().removeClass('active');
+          
+          $('#VibeOnHour2').prop('checked', true);
+          $('#VibeOnHour2').parent().addClass('active'); 
+        }
+        
+
+      });
+
+      $("#configure-form").submit(function(e) {  
+
+        mVibe = $('#VibeOnHour1').prop('checked') ? 1 : 0;
+
+        localStorage.setItem("VibeOnHour1", mVibe);
+        
+        var j = {
+          VibeOnHour : parseInt(mVibe)
+        };
+        
+        window.location.href = "pebblejs://close#" + JSON.stringify(j);
+
+        e.preventDefault();
+      });
+  </script>
+
+
+</body></html>
