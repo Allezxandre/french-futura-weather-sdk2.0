@@ -4,6 +4,13 @@
 #include "network.h"
 #include "config.h"
 
+#define DEBUG 1
+#ifndef DEBUG
+  #pragma message "---- COMPILING IN RELEASE MODE ----"
+  #undef APP_LOG
+  #define APP_LOG(...)
+#endif
+
 #define TIME_FRAME      (GRect(0, 2, 144, 168-6))
 #define DATE_FRAME      (GRect(1, 66, 144, 168-62))
 
@@ -81,7 +88,17 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       day_int = tick_time->tm_wday;
     static int month_int;
       month_int = tick_time->tm_mon;
-    snprintf(date_text, sizeof(date_text), "%s %i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
+
+    switch (locale_int) { // ADD YOUR DATE FMT HERE
+      case 1:
+      case 2:
+        snprintf(date_text, sizeof(date_text), "%s %01i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]); // EU - DAY ## MNTH
+        break;
+      case 0:
+      default:
+        snprintf(date_text, sizeof(date_text), "%s %01i", day_of_week[day_int], tick_time->tm_mday); // UK/US/Other - DAY ##
+        break;
+    }
     text_layer_set_text(date_layer, date_text);
   }
 
@@ -134,17 +151,6 @@ static void init(void) {
   window_stack_push(window, true /* Animated */);
   window_set_background_color(window, GColorBlack);
 
-  // Get language locale
-  strcpy(locale,i18n_get_system_locale());
-  locale_int = locale_number(locale);
-  APP_LOG(APP_LOG_LEVEL_INFO,"Got system locale: %s", locale);
-  memcpy(day_of_week, locale_packages[locale_int][0], sizeof(day_of_week));
-  APP_LOG(APP_LOG_LEVEL_INFO,"Last day is %s",day_of_week[6]);
-  memcpy(month_of_year, locale_packages[locale_int][1], sizeof(month_of_year));
-  APP_LOG(APP_LOG_LEVEL_INFO,"Last month is %s",month_of_year[11]);
-  //load_locale(locale, day_of_week, month_of_year);
-  //APP_LOG(APP_LOG_LEVEL_WARNING,"day_of_week[3] is %s", day_of_week[3]);
-
   weather_data = malloc(sizeof(WeatherData));
   init_network(weather_data);
 
@@ -168,6 +174,13 @@ static void init(void) {
   // Add weather layer
   weather_layer = weather_layer_create(GRect(0, 90, 144, 80));
   layer_add_child(window_get_root_layer(window), weather_layer);
+
+  // Get language locale
+  strcpy(locale,i18n_get_system_locale());
+  locale_int = locale_number(locale);
+  APP_LOG(APP_LOG_LEVEL_INFO,"Got system locale: %s", locale);
+  memcpy(day_of_week, locale_packages[locale_int][0], sizeof(day_of_week));
+  memcpy(month_of_year, locale_packages[locale_int][1], sizeof(month_of_year));
 
   // Update the screen right away
   time_t now = time(NULL);
