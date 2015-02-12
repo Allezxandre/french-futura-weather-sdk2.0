@@ -19,6 +19,13 @@ static WeatherLayer *weather_layer;
 static char date_text[] = "XXX 00";
 static char time_text[] = "00:00";
 
+// locale-dependent variables
+static int locale_number(char *locale);
+static void load_locale(char *locale_string, char *day_var[], char *month_var[]);
+static char locale[] = "XX_XX";
+static char *day_of_week[7];
+static char *month_of_year[12];
+
 /* Preload the fonts */
 GFont font_date;
 GFont font_time;
@@ -100,6 +107,12 @@ static void init(void) {
   window_stack_push(window, true /* Animated */);
   window_set_background_color(window, GColorBlack);
 
+  // Get language locale
+  strcpy(locale,i18n_get_system_locale());
+  APP_LOG(APP_LOG_LEVEL_INFO,"Got system locale: %s", locale);
+  load_locale(locale, day_of_week, month_of_year);
+  APP_LOG(APP_LOG_LEVEL_WARNING,"day_of_week[3] is %s", day_of_week[3]);
+
   weather_data = malloc(sizeof(WeatherData));
   init_network(weather_data);
 
@@ -113,7 +126,9 @@ static void init(void) {
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(time_layer));
 
+  APP_LOG(APP_LOG_LEVEL_WARNING,"BORN TO ");
   date_layer = text_layer_create(DATE_FRAME);
+  APP_LOG(APP_LOG_LEVEL_WARNING,"rage...");
   text_layer_set_text_color(date_layer, GColorWhite);
   text_layer_set_background_color(date_layer, GColorClear);
   text_layer_set_font(date_layer, font_date);
@@ -150,3 +165,33 @@ int main(void) {
   app_event_loop();
   deinit();
 }
+
+
+/* ------------- Locale functions --------------- */
+static void load_locale(char *locale_string, char *day_var[], char *month_var[]) {
+  static int locale_int;
+  locale_int = locale_number(locale_string);
+  char ***selected_locale = malloc(sizeof(char **) * 12 * 4);
+  memcpy(selected_locale, locale_packages[locale_int], sizeof locale_packages[locale_int]);
+  APP_LOG(APP_LOG_LEVEL_WARNING,"selected_locale[1][0] is %s", selected_locale[1][0]);
+  memcpy(day_var, selected_locale[0], sizeof selected_locale[0]);
+  APP_LOG(APP_LOG_LEVEL_WARNING,"day_var[3] is %s", day_var[3]);
+  memcpy(month_var, selected_locale[1], sizeof selected_locale[1]);
+  free(selected_locale);
+}
+
+static int locale_number(char *locale){  
+  if(locale) // We only match the first two chars
+          switch(locale[0]) {
+            case 'f':   switch(locale[1]) {
+                          case 'r': return 1; // fr = 1
+                        }
+                        break;
+            case 'e':   switch(locale[1]) {
+                          case 'n': return 0;
+                        }
+                        break;
+          }
+        APP_LOG(APP_LOG_LEVEL_WARNING,"Locale number unknown");
+        return 0;
+  }
