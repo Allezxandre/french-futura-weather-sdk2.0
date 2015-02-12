@@ -72,7 +72,8 @@ function fetchWeather(latitude, longitude) {
                     updateInProgress = false;
                 }
             } else {
-                console.log("Error");
+                console.log("Error #" + req.status);
+                console.log(req.responseText);
                 updateInProgress = false;
                 Pebble.sendAppMessage({ "error": "HTTP Error" });
             }
