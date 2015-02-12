@@ -16,15 +16,38 @@ static TextLayer *date_layer;
 static TextLayer *time_layer;
 static WeatherLayer *weather_layer;
 
-static char date_text[] = "XXX 00";
+// static char date_text[] = "XXX 00";
 static char time_text[] = "00:00";
 
 // locale-dependent variables
 static int locale_number(char *locale);
-static void load_locale(char *locale_string, char *day_var[], char *month_var[]);
+//static void load_locale(char *locale_string, char *day_var[], char *month_var[]);
 static char locale[] = "XX_XX";
+static int locale_int;
 static char *day_of_week[7];
 static char *month_of_year[12];
+
+static int locale_number(char *locale){  
+  // Return locale position in the locale_packages array
+  // Only matches 2 first letters
+  if(locale)  // ADD YOUR LOCALE ID HERE
+          switch(locale[0]) {
+            case 'd':   switch(locale[1]) {
+                          case 'e': return 2; // de (german) = 2
+                        }
+                        break;
+            case 'e':   switch(locale[1]) {
+                          case 'n': return 0; // en (english) = 0
+                        }
+                        break;
+            case 'f':   switch(locale[1]) {
+                          case 'r': return 1; // fr (french) = 1
+                        }
+                        break;
+          }
+        APP_LOG(APP_LOG_LEVEL_WARNING,"Locale number unknown");
+        return 0;
+}
 
 /* Preload the fonts */
 GFont font_date;
@@ -52,9 +75,13 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   }
   if (units_changed & DAY_UNIT) {
     // Update the date - Without a leading 0 on the day of the month
-    char day_text[4];
-    strftime(day_text, sizeof(day_text), "%a", tick_time);
-    snprintf(date_text, sizeof(date_text), "%s %i", day_text, tick_time->tm_mday);
+    static char date_text[] = "DAY 00 MOIS";
+      // Get the day and month as int
+    static int day_int;
+      day_int = tick_time->tm_wday;
+    static int month_int;
+      month_int = tick_time->tm_mon;
+    snprintf(date_text, sizeof(date_text), "%s %i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
     text_layer_set_text(date_layer, date_text);
   }
 
@@ -109,9 +136,14 @@ static void init(void) {
 
   // Get language locale
   strcpy(locale,i18n_get_system_locale());
+  locale_int = locale_number(locale);
   APP_LOG(APP_LOG_LEVEL_INFO,"Got system locale: %s", locale);
-  load_locale(locale, day_of_week, month_of_year);
-  APP_LOG(APP_LOG_LEVEL_WARNING,"day_of_week[3] is %s", day_of_week[3]);
+  memcpy(day_of_week, locale_packages[locale_int][0], sizeof(day_of_week));
+  APP_LOG(APP_LOG_LEVEL_INFO,"Last day is %s",day_of_week[6]);
+  memcpy(month_of_year, locale_packages[locale_int][1], sizeof(month_of_year));
+  APP_LOG(APP_LOG_LEVEL_INFO,"Last month is %s",month_of_year[11]);
+  //load_locale(locale, day_of_week, month_of_year);
+  //APP_LOG(APP_LOG_LEVEL_WARNING,"day_of_week[3] is %s", day_of_week[3]);
 
   weather_data = malloc(sizeof(WeatherData));
   init_network(weather_data);
@@ -126,9 +158,7 @@ static void init(void) {
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(time_layer));
 
-  APP_LOG(APP_LOG_LEVEL_WARNING,"BORN TO ");
   date_layer = text_layer_create(DATE_FRAME);
-  APP_LOG(APP_LOG_LEVEL_WARNING,"rage...");
   text_layer_set_text_color(date_layer, GColorWhite);
   text_layer_set_background_color(date_layer, GColorClear);
   text_layer_set_font(date_layer, font_date);
@@ -165,33 +195,3 @@ int main(void) {
   app_event_loop();
   deinit();
 }
-
-
-/* ------------- Locale functions --------------- */
-static void load_locale(char *locale_string, char *day_var[], char *month_var[]) {
-  static int locale_int;
-  locale_int = locale_number(locale_string);
-  char ***selected_locale = malloc(sizeof(char **) * 12 * 4);
-  memcpy(selected_locale, locale_packages[locale_int], sizeof locale_packages[locale_int]);
-  APP_LOG(APP_LOG_LEVEL_WARNING,"selected_locale[1][0] is %s", selected_locale[1][0]);
-  memcpy(day_var, selected_locale[0], sizeof selected_locale[0]);
-  APP_LOG(APP_LOG_LEVEL_WARNING,"day_var[3] is %s", day_var[3]);
-  memcpy(month_var, selected_locale[1], sizeof selected_locale[1]);
-  free(selected_locale);
-}
-
-static int locale_number(char *locale){  
-  if(locale) // We only match the first two chars
-          switch(locale[0]) {
-            case 'f':   switch(locale[1]) {
-                          case 'r': return 1; // fr = 1
-                        }
-                        break;
-            case 'e':   switch(locale[1]) {
-                          case 'n': return 0;
-                        }
-                        break;
-          }
-        APP_LOG(APP_LOG_LEVEL_WARNING,"Locale number unknown");
-        return 0;
-  }
