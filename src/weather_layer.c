@@ -1,6 +1,13 @@
 #include <pebble.h>
 #include "weather_layer.h"
 
+// #define DEBUG 1
+#ifndef DEBUG
+  #pragma message "---- COMPILING IN RELEASE MODE ----"
+  #undef APP_LOG
+  #define APP_LOG(...)
+#endif
+
 static uint8_t WEATHER_ICONS[] = {
   RESOURCE_ID_ICON_CLEAR_DAY,
   RESOURCE_ID_ICON_CLEAR_NIGHT,

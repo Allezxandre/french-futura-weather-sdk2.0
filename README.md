@@ -1,7 +1,15 @@
-Futura Weather 2 (Pebble SDK 2.0)
-=================================
+French Weather
+=====================
+
+![Animated-screenshot](assets/PebbleGif.gif)
+
+International weather watchface for the Pebble Watch
 
 Based on work by:
- - Weather example by Katharine - https://github.com/Katharine/WeatherWatch
+ - "Futura Weather 2" by Niknam - https://github.com/Niknam/futura-weather-sdk2.0
+ - "WeatherWatch" by Katharine - https://github.com/Katharine/WeatherWatch
  - "Roboto Weather" by Martin Rosinski - http://www.mypebblefaces.com/apps/3601/3408/
- - Futura Weather by Niknam - https://github.com/Niknam/futura-weather
+
+ * * *
+&copy; 2015 Alexandre Jouandin
+Licensed under the [GNU General Public License](http://www.gnu.org/licenses/gpl.html)

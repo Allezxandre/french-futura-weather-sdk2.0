@@ -1,8 +1,13 @@
 #include <pebble.h>
 #include "network.h"
 
-int VibeOnHour = -1;
-	
+// #define DEBUG 1
+#ifndef DEBUG
+  #pragma message "---- COMPILING IN RELEASE MODE ----"
+  #undef APP_LOG
+  #define APP_LOG(...)
+#endif
+
 static void appmsg_in_received(DictionaryIterator *received, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "In received.");
 
@@ -10,14 +15,17 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
 
   Tuple *temperature_tuple = dict_find(received, KEY_TEMPERATURE);
   Tuple *condition_tuple = dict_find(received, KEY_CONDITION);
-  Tuple *config_tuple = dict_find(received, VIBE_ON_HOUR_KEY);
+  Tuple *sunrise_tuple = dict_find(received, KEY_SUNRISE);
+  Tuple *sunset_tuple = dict_find(received, KEY_SUNSET);
+  Tuple *current_time_tuple = dict_find(received, KEY_CURRENT_TIME);
   Tuple *error_tuple = dict_find(received, KEY_ERROR);
 
   if (temperature_tuple && condition_tuple) {
     weather->temperature = temperature_tuple->value->int32;
     weather->condition = condition_tuple->value->int32;
-	VibeOnHour = config_tuple->value->int8;
-	    APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour has been set to %i in network file", config_tuple->value->int8);
+    weather->sunrise = sunrise_tuple->value->int32;
+    weather->sunset = sunset_tuple->value->int32;
+    weather->current_time = current_time_tuple->value->int32;
     weather->error = WEATHER_E_OK;
     weather->updated = time(NULL);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got temperature %i and condition %i", weather->temperature, weather->condition);
@@ -40,7 +48,7 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
 static void appmsg_in_dropped(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "In dropped: %i", reason);
   // Request a new update...
-  request_weather();
+  request_weather(NULL);
 }
 
 static void appmsg_out_sent(DictionaryIterator *sent, void *context) {
@@ -55,16 +63,16 @@ static void appmsg_out_failed(DictionaryIterator *failed, AppMessageResult reaso
   switch (reason) {
     case APP_MSG_NOT_CONNECTED:
       weather->error = WEATHER_E_DISCONNECTED;
-      request_weather();
+      request_weather(NULL);
       break;
     case APP_MSG_SEND_REJECTED:
     case APP_MSG_SEND_TIMEOUT:
       weather->error = WEATHER_E_PHONE;
-      request_weather();
+      request_weather(NULL);
       break;
     default:
       weather->error = WEATHER_E_PHONE;
-      request_weather();
+      request_weather(NULL);
       break;
   }
 }
@@ -88,7 +96,7 @@ void close_network()
   app_message_deregister_callbacks();
 }
 
-void request_weather()
+void request_weather(void *data)
 {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Roger! Weather request received. Starting....");
   DictionaryIterator *iter;

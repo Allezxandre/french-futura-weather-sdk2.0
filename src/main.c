@@ -2,10 +2,16 @@
 
 #include "weather_layer.h"
 #include "network.h"
-#include "config.h"
 
-#define TIME_FRAME      (GRect(0, 2, 144, 168-6))
-#define DATE_FRAME      (GRect(1, 66, 144, 168-62))
+// #define DEBUG 1
+#ifndef DEBUG
+  #pragma message "---- COMPILING IN RELEASE MODE ----"
+  #undef APP_LOG
+  #define APP_LOG(...)
+#endif
+
+#define TIME_FRAME      (GRect(0, 0, 144, 72))
+#define DATE_FRAME      (GRect(1, 72, 143, 20))
 
 /* Keep a pointer to the current weather data as a global variable */
 static WeatherData *weather_data;
@@ -16,51 +22,40 @@ static TextLayer *date_layer;
 static TextLayer *time_layer;
 static WeatherLayer *weather_layer;
 
-// Need to be static because pointers to them are stored in the text layers
-static char date_text[] = "DAY ## MMMM";
+/* Timers */
+static AppTimer* update_timer;
+static void update_and_animate(void *data);
+
+/* Bluetooth connection */
+static bool bluetooth_connected;
+static bool stale = false;
+void bluetooth_connection_handler(bool connected){
+  bluetooth_connected = connected;
+  if (connected)
+  {
+    APP_LOG(APP_LOG_LEVEL_DEBUG,"Back online. Let's update");
+    if (update_timer != NULL) {
+      app_timer_cancel(update_timer);
+      update_timer = NULL;
+      update_timer = app_timer_register(5000,update_and_animate,NULL);
+    } else {
+      update_timer = app_timer_register(5000,update_and_animate,NULL);
+    }
+    stale = false;
+  } else {
+    stale = true;
+    weather_layer_set_temperature(weather_layer, weather_data->temperature, stale);
+  }
+}
+
+// static char date_text[] = "XXX 00";
 static char time_text[] = "00:00";
 
 /* Preload the fonts */
 GFont font_date;
 GFont font_time;
 
-// Lists of days and months
-          // Translation for DAYS goes here, starting on SUNDAY :
-const char *day_of_week[] = {"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"};
-
-          // Translation for MONTHS goes here :
-const char *month_of_year[] = { "Janv", "Fevr", "Mars", "Avr", "Mai", "Juin", "Juil", "Aout", "Sept", "Oct", "Nov", "Dec"};   
-
-
-
-static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
-{
-  if (units_changed & MINUTE_UNIT) {
-    // Update the time - Deal with 12 / 24 format
-    clock_copy_time_string(time_text, sizeof(time_text));
-	 APP_LOG(APP_LOG_LEVEL_INFO, "-------------- Time is %s --------------",time_text);
-    text_layer_set_text(time_layer, time_text);
-	  APP_LOG(APP_LOG_LEVEL_DEBUG, "VibeOnHour is set to %i", VibeOnHour);
-	  	static int heure; 
-		 heure = tick_time->tm_hour;
-  		if (((units_changed & HOUR_UNIT) == HOUR_UNIT) && ((heure > 9) && (heure < 23)) && (VibeOnHour == 1)) {
-    	vibes_double_pulse();
-  		}
-	  
-  }
-  
-  if (units_changed & DAY_UNIT) { 
-    // Get the day and month as int
-  static int day_int;
-	 day_int = tick_time->tm_wday;
-	static int month_int;
-	 month_int = tick_time->tm_mon;
-    // Print the result
-	snprintf(date_text, sizeof(date_text), "%s %i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
-	 APP_LOG(APP_LOG_LEVEL_INFO, "Displayed date : [%s %i %s]", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]);
-	text_layer_set_text(date_layer, date_text);
-  }
-
+static void animate_update(){
   // Update the bottom half of the screen: icon and temperature
   static int animation_step = 0;
   if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK)
@@ -85,27 +80,91 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     }
     else {
       // Show the temperature as 'stale' if it has not been updated in 30 minutes
-      bool stale = false;
       if (weather_data->updated > time(NULL) + 1800) {
         stale = true;
       }
       weather_layer_set_temperature(weather_layer, weather_data->temperature, stale);
 
-      // Figure out if it's day or night. Not the best way to do this but the webservice
-      // does not seem to return this info.
+      // Day/night check
       bool night_time = false;
-      if (tick_time->tm_hour >= 19 || tick_time->tm_hour < 7)
+      if (weather_data->current_time < weather_data->sunrise || weather_data->current_time > weather_data->sunset)
         night_time = true;
     // APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "Set Weather icon. I do this every second, even though I don't fetch weather, and that's normal");
 	weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
     }
   }
+}
 
-  // Refresh the weather info every 15 minutes
-  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0)
+static void update_and_animate(void *data) {
+  if (bluetooth_connected) {
+    weather_data->updated = 0;
+    animate_update();
+    request_weather(NULL);
+  }
+  update_timer = NULL;
+}
+
+static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
+{
+  if (units_changed & MINUTE_UNIT) {
+    // Update the time - Fix to deal with 12 / 24 centering bug
+    time_t currentTime = time(0);
+    struct tm *currentLocalTime = localtime(&currentTime);
+
+    // Manually format the time as 12 / 24 hour, as specified
+    strftime(   time_text, 
+                sizeof(time_text), 
+                clock_is_24h_style() ? "%R" : "%I:%M", 
+                currentLocalTime);
+
+    // Drop the first char of time_text if needed
+    if (!clock_is_24h_style() && (time_text[0] == '0')) {
+      memmove(time_text, &time_text[1], sizeof(time_text) - 1);
+    }
+
+    text_layer_set_text(time_layer, time_text);
+  }
+  if (units_changed & DAY_UNIT) {
+    // Update the date - Without a leading 0 on the day of the month
+    static char date_text[] = "DAY 00 MOIS";
+    // Get locale
+    char *sys_locale = setlocale(LC_ALL, "");
+    // Set the DateLayer
+    if (strcmp("fr_FR", sys_locale) == 0) {
+      strftime(date_text, sizeof(date_text), "%a %e %b", tick_time);
+    } else if (strcmp("de_DE", sys_locale) == 0) {
+      strftime(date_text, sizeof(date_text), "%a %e %b", tick_time);
+    } else if (strcmp("es_ES", sys_locale) == 0) {
+      strftime(date_text, sizeof(date_text), "%a %e", tick_time);
+    } else {
+      // Fall back to English (the font doesn't support Chinese)
+      strftime(date_text, sizeof(date_text), "%a %e", tick_time);
+    }
+    // Put layer
+    text_layer_set_text(date_layer, date_text);
+  }
+
+  if (bluetooth_connected)
   {
-	  APP_LOG(APP_LOG_LEVEL_INFO, "Main here, I just requested Weather for timely refresh");
-    request_weather();
+    animate_update();
+  } else if (weather_data->updated == 0) {
+    weather_layer_set_icon(weather_layer, WEATHER_ICON_PHONE_ERROR);
+  }
+  // Refresh the weather info every 15 minutes
+  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 20) == 0)
+  {
+    request_weather(NULL);
+  }
+}
+
+static void tap_handler(AccelAxisType axis, int32_t direction) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Received TAP");
+  if (update_timer != NULL) {
+    app_timer_cancel(update_timer);
+    update_timer = NULL;
+    update_timer = app_timer_register(2000,update_and_animate,NULL);
+  } else {
+    update_timer = app_timer_register(2000,update_and_animate,NULL);
   }
 }
 
@@ -117,8 +176,8 @@ static void init(void) {
   weather_data = malloc(sizeof(WeatherData));
   init_network(weather_data);
 
-  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FUTURA_18));
-  font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FUTURA_CONDENSED_53));
+  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_UBUNTU_REGULAR_18));
+  font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_UBUNTU_CONDENSED_70));
 
   time_layer = text_layer_create(TIME_FRAME);
   text_layer_set_text_color(time_layer, GColorWhite);
@@ -138,20 +197,27 @@ static void init(void) {
   weather_layer = weather_layer_create(GRect(0, 90, 144, 80));
   layer_add_child(window_get_root_layer(window), weather_layer);
 
-	
+  // Subscribe to the Bluetooth service 
+  bluetooth_connected = bluetooth_connection_service_peek();
+  bluetooth_connection_service_subscribe(bluetooth_connection_handler);
   // Update the screen right away
   time_t now = time(NULL);
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
   // And then every second
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
-// Prepare Sync	
-	//app_sync_init(&sync, sync_buffer, sizeof(sync_buffer), initial_values, ARRAY_LENGTH(initial_values),sync_tuple_changed_callback, NULL, NULL);
-	 APP_LOG(APP_LOG_LEVEL_DEBUG, "Init finished. Vibe is set to %i", VibeOnHour);
+  // subscribe to TAP
+  accel_tap_service_subscribe(tap_handler);
 }
 
 static void deinit(void) {
   window_destroy(window);
   tick_timer_service_unsubscribe();
+  accel_tap_service_unsubscribe();
+
+  if (update_timer != NULL) {
+     app_timer_cancel(update_timer);
+     update_timer = NULL;
+  }
 
   text_layer_destroy(time_layer);
   text_layer_destroy(date_layer);
