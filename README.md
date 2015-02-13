@@ -1,7 +1,7 @@
 French Weather
 =====================
 
-[!Animated-screenshot](assets/PebbleGif.gif)
+![Animated-screenshot](assets/PebbleGif.gif)
 
 International weather watchface for the Pebble Watch
 
