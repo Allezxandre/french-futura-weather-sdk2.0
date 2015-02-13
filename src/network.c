@@ -37,7 +37,7 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
 static void appmsg_in_dropped(AppMessageResult reason, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "In dropped: %i", reason);
   // Request a new update...
-  request_weather();
+  request_weather(NULL);
 }
 
 static void appmsg_out_sent(DictionaryIterator *sent, void *context) {
@@ -52,16 +52,16 @@ static void appmsg_out_failed(DictionaryIterator *failed, AppMessageResult reaso
   switch (reason) {
     case APP_MSG_NOT_CONNECTED:
       weather->error = WEATHER_E_DISCONNECTED;
-      request_weather();
+      request_weather(NULL);
       break;
     case APP_MSG_SEND_REJECTED:
     case APP_MSG_SEND_TIMEOUT:
       weather->error = WEATHER_E_PHONE;
-      request_weather();
+      request_weather(NULL);
       break;
     default:
       weather->error = WEATHER_E_PHONE;
-      request_weather();
+      request_weather(NULL);
       break;
   }
 }
@@ -85,7 +85,7 @@ void close_network()
   app_message_deregister_callbacks();
 }
 
-void request_weather()
+void request_weather(void *data)
 {
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);

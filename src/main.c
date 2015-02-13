@@ -2,7 +2,6 @@
 
 #include "weather_layer.h"
 #include "network.h"
-#include "config.h"
 
 #define DEBUG 1
 #ifndef DEBUG
@@ -26,82 +25,11 @@ static WeatherLayer *weather_layer;
 // static char date_text[] = "XXX 00";
 static char time_text[] = "00:00";
 
-// locale-dependent variables
-static int locale_number(char *locale);
-//static void load_locale(char *locale_string, char *day_var[], char *month_var[]);
-static char locale[] = "XX_XX";
-static int locale_int;
-static char *day_of_week[7];
-static char *month_of_year[12];
-
-static int locale_number(char *locale){  
-  // Return locale position in the locale_packages array
-  // Only matches 2 first letters
-  if(locale)  // ADD YOUR LOCALE ID HERE
-          switch(locale[0]) {
-            case 'd':   switch(locale[1]) {
-                          case 'e': return 2; // de (german) = 2
-                        }
-                        break;
-            case 'e':   switch(locale[1]) {
-                          case 'n': return 0; // en (english) = 0
-                        }
-                        break;
-            case 'f':   switch(locale[1]) {
-                          case 'r': return 1; // fr (french) = 1
-                        }
-                        break;
-          }
-        APP_LOG(APP_LOG_LEVEL_WARNING,"Locale number unknown");
-        return 0;
-}
-
 /* Preload the fonts */
 GFont font_date;
 GFont font_time;
 
-static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
-{
-  if (units_changed & MINUTE_UNIT) {
-    // Update the time - Fix to deal with 12 / 24 centering bug
-    time_t currentTime = time(0);
-    struct tm *currentLocalTime = localtime(&currentTime);
-
-    // Manually format the time as 12 / 24 hour, as specified
-    strftime(   time_text, 
-                sizeof(time_text), 
-                clock_is_24h_style() ? "%R" : "%I:%M", 
-                currentLocalTime);
-
-    // Drop the first char of time_text if needed
-    if (!clock_is_24h_style() && (time_text[0] == '0')) {
-      memmove(time_text, &time_text[1], sizeof(time_text) - 1);
-    }
-
-    text_layer_set_text(time_layer, time_text);
-  }
-  if (units_changed & DAY_UNIT) {
-    // Update the date - Without a leading 0 on the day of the month
-    static char date_text[] = "DAY 00 MOIS";
-      // Get the day and month as int
-    static int day_int;
-      day_int = tick_time->tm_wday;
-    static int month_int;
-      month_int = tick_time->tm_mon;
-
-    switch (locale_int) { // ADD YOUR DATE FMT HERE
-      case 1:
-      case 2:
-        snprintf(date_text, sizeof(date_text), "%s %01i %s", day_of_week[day_int], tick_time->tm_mday, month_of_year[month_int]); // EU - DAY ## MNTH
-        break;
-      case 0:
-      default:
-        snprintf(date_text, sizeof(date_text), "%s %01i", day_of_week[day_int], tick_time->tm_mday); // UK/US/Other - DAY ##
-        break;
-    }
-    text_layer_set_text(date_layer, date_text);
-  }
-
+static void animate_update(){
   // Update the bottom half of the screen: icon and temperature
   static int animation_step = 0;
   if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK)
@@ -138,12 +66,61 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
     }
   }
+}
 
+static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
+{
+  if (units_changed & MINUTE_UNIT) {
+    // Update the time - Fix to deal with 12 / 24 centering bug
+    time_t currentTime = time(0);
+    struct tm *currentLocalTime = localtime(&currentTime);
+
+    // Manually format the time as 12 / 24 hour, as specified
+    strftime(   time_text, 
+                sizeof(time_text), 
+                clock_is_24h_style() ? "%R" : "%I:%M", 
+                currentLocalTime);
+
+    // Drop the first char of time_text if needed
+    if (!clock_is_24h_style() && (time_text[0] == '0')) {
+      memmove(time_text, &time_text[1], sizeof(time_text) - 1);
+    }
+
+    text_layer_set_text(time_layer, time_text);
+  }
+  if (units_changed & DAY_UNIT) {
+    // Update the date - Without a leading 0 on the day of the month
+    static char date_text[] = "DAY 00 MOIS";
+    // Get locale
+    char *sys_locale = setlocale(LC_ALL, "");
+    // Set the DateLayer
+    if (strcmp("fr_FR", sys_locale) == 0) {
+      strftime(date_text, sizeof(date_text), "%a %e %b", tick_time);
+    } else if (strcmp("de_DE", sys_locale) == 0) {
+      strftime(date_text, sizeof(date_text), "%a %e %b", tick_time);
+    } else if (strcmp("es_ES", sys_locale) == 0) {
+      strftime(date_text, sizeof(date_text), "%a %e", tick_time);
+    } else {
+      // Fall back to English (the font doesn't support Chinese)
+      strftime(date_text, sizeof(date_text), "%a %e", tick_time);
+    }
+    // Put layer
+    text_layer_set_text(date_layer, date_text);
+  }
+
+  animate_update();
   // Refresh the weather info every 15 minutes
   if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0)
   {
-    request_weather();
+    request_weather(NULL);
   }
+}
+
+static void tap_handler(AccelAxisType axis, int32_t direction) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Received TAP");
+    weather_data->updated = 0;
+    request_weather(NULL);
+    animate_update();
 }
 
 static void init(void) {
@@ -175,23 +152,19 @@ static void init(void) {
   weather_layer = weather_layer_create(GRect(0, 90, 144, 80));
   layer_add_child(window_get_root_layer(window), weather_layer);
 
-  // Get language locale
-  strcpy(locale,i18n_get_system_locale());
-  locale_int = locale_number(locale);
-  APP_LOG(APP_LOG_LEVEL_INFO,"Got system locale: %s", locale);
-  memcpy(day_of_week, locale_packages[locale_int][0], sizeof(day_of_week));
-  memcpy(month_of_year, locale_packages[locale_int][1], sizeof(month_of_year));
-
   // Update the screen right away
   time_t now = time(NULL);
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
   // And then every second
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+  // subscribe to TAP
+  accel_tap_service_subscribe(tap_handler);
 }
 
 static void deinit(void) {
   window_destroy(window);
   tick_timer_service_unsubscribe();
+  accel_tap_service_unsubscribe();
 
   text_layer_destroy(time_layer);
   text_layer_destroy(date_layer);
