@@ -32,16 +32,12 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
   }
   else if (error_tuple) {
     weather->error = WEATHER_E_NETWORK;
-    APP_LOG(APP_LOG_LEVEL_ERROR, "Got error %s", error_tuple->value->cstring);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Got error %s", error_tuple->value->cstring);
   }
   else {
     weather->error = WEATHER_E_PHONE;
-    APP_LOG(APP_LOG_LEVEL_WARNING, "Got message with unknown keys... temperature=%p condition=%p error=%p",
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Got message with unknown keys... temperature=%p condition=%p error=%p",
       temperature_tuple, condition_tuple, error_tuple);
-	  if (error_tuple == 0x0 && config_tuple != 0x0) {
-		  APP_LOG(APP_LOG_LEVEL_INFO, "I'll ignore and fetch weather, because VibeOnHour was returned");
-		  request_weather();
-							   }
   }
 }
 
@@ -98,11 +94,9 @@ void close_network()
 
 void request_weather(void *data)
 {
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Roger! Weather request received. Starting....");
   DictionaryIterator *iter;
-APP_LOG(APP_LOG_LEVEL_DEBUG, "Dictionnary");
   app_message_outbox_begin(&iter);
-APP_LOG(APP_LOG_LEVEL_DEBUG, "App_Message_Outbox");
+
   dict_write_uint8(iter, KEY_REQUEST_UPDATE, 42);
 
   app_message_outbox_send();

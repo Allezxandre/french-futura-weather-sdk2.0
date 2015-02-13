@@ -194,6 +194,5 @@ uint8_t weather_icon_for_condition(int c, bool night_time) {
   else {
     // Weather condition not available
     return WEATHER_ICON_NOT_AVAILABLE;
-  APP_LOG(APP_LOG_LEVEL_WARNING, "All tests failed");
   }
 }

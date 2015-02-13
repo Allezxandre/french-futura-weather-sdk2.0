@@ -7,18 +7,6 @@
 #define KEY_CURRENT_TIME 4
 #define KEY_ERROR 5
 #define KEY_REQUEST_UPDATE 42
-#define VIBE_ON_HOUR_KEY 5
-/*
- //Sync positions
-static AppSync sync;
-static uint8_t sync_buffer[64];
-enum {
-	VIBE_ON_HOUR_KEY = 5
-};
-*/
-	
-extern int VibeOnHour; //extern to be able to use it in main.c, as well as in network.c (don't forget to declare it in .c as well)
-	
 typedef enum {
   WEATHER_E_OK = 0,
   WEATHER_E_DISCONNECTED,

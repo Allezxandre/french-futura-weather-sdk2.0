@@ -63,7 +63,6 @@ static void animate_update(){
     // 'Animate' loading icon until the first successful weather request
     if (animation_step == 0) {
       weather_layer_set_icon(weather_layer, WEATHER_ICON_LOADING1);
-	  //APP_LOG(APP_LOG_LEVEL_DEBUG, "---Loading...");
     }
     else if (animation_step == 1) {
       weather_layer_set_icon(weather_layer, WEATHER_ICON_LOADING2);
@@ -89,8 +88,7 @@ static void animate_update(){
       bool night_time = false;
       if (weather_data->current_time < weather_data->sunrise || weather_data->current_time > weather_data->sunset)
         night_time = true;
-    // APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "Set Weather icon. I do this every second, even though I don't fetch weather, and that's normal");
-	weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
+      weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
     }
   }
 }

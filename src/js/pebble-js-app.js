@@ -8,32 +8,6 @@ Pebble.addEventListener("appmessage", function(e) {
     updateWeather();
 });
 
-var mConfig = {};
-
-Pebble.addEventListener("ready", function(e) {
-        console.log("Starting Configuration fetch");
-  loadLocalData();
-  returnConfigToPebble();
-});
-
-Pebble.addEventListener("showConfiguration", function(e) {
-		console.log("Opening URL");
-        Pebble.openURL(mConfig.configureUrl);
-	
-});
-
-Pebble.addEventListener("webviewclosed",
-  function(e) {
-    if (e.response) {
-      var config = JSON.parse(e.response);
-      saveLocalData(config);
-      console.log("Saved config");
-      returnConfigToPebble();
-      console.log("Returned config to Pebble");
-    }
-  }
-);
-
 var updateInProgress = false;
 
 function updateWeather() {
@@ -58,7 +32,6 @@ function locationError(err) {
     Pebble.sendAppMessage({ "error": "Loc unavailable" });
     updateInProgress = false;
 }
-
 
 function fetchWeather(latitude, longitude) {
     var response;
