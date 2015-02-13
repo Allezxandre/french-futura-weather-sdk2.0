@@ -25,6 +25,7 @@ static WeatherLayer *weather_layer;
 /* Timers */
 static AppTimer* update_timer;
 static void update_and_animate(void *data);
+static int multiplier = 1; // used for failed updates
 
 /* Bluetooth connection */
 static bool bluetooth_connected;
@@ -58,8 +59,7 @@ GFont font_time;
 static void animate_update(){
   // Update the bottom half of the screen: icon and temperature
   static int animation_step = 0;
-  if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK)
-  {
+  if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK) {
     // 'Animate' loading icon until the first successful weather request
     if (animation_step == 0) {
       weather_layer_set_icon(weather_layer, WEATHER_ICON_LOADING1);
@@ -71,13 +71,21 @@ static void animate_update(){
       weather_layer_set_icon(weather_layer, WEATHER_ICON_LOADING3);
     }
     animation_step = (animation_step + 1) % 3;
-  }
-  else {
-    // Update the weather icon and temperature
-    if (weather_data->error) {
+  } else {
+    if (weather_data->error) { // Error -> Update the weather icon and temperature
       weather_layer_set_icon(weather_layer, WEATHER_ICON_PHONE_ERROR);
-    }
-    else {
+      if (bluetooth_connected && (multiplier <= 10)) { // If bluetooth is connected, schedule refresh in 1 minute
+          if (update_timer != NULL) {
+            app_timer_cancel(update_timer);
+            update_timer = NULL;
+            update_timer = app_timer_register(multiplier * 60000,update_and_animate,NULL);
+          } else {
+            update_timer = app_timer_register(multiplier * 60000,update_and_animate,NULL);
+          }
+          multiplier *= 2.5;
+      }
+    } else { // No Error
+      multiplier = 1;
       // Show the temperature as 'stale' if it has not been updated in 30 minutes
       if (weather_data->updated > time(NULL) + 1800) {
         stale = true;
