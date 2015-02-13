@@ -3,15 +3,15 @@
 #include "weather_layer.h"
 #include "network.h"
 
-#define DEBUG 1
+// #define DEBUG 1
 #ifndef DEBUG
   #pragma message "---- COMPILING IN RELEASE MODE ----"
   #undef APP_LOG
   #define APP_LOG(...)
 #endif
 
-#define TIME_FRAME      (GRect(0, 2, 144, 168-6))
-#define DATE_FRAME      (GRect(1, 66, 144, 168-62))
+#define TIME_FRAME      (GRect(0, 0, 144, 72))
+#define DATE_FRAME      (GRect(1, 72, 143, 20))
 
 /* Keep a pointer to the current weather data as a global variable */
 static WeatherData *weather_data;
@@ -21,6 +21,32 @@ static Window *window;
 static TextLayer *date_layer;
 static TextLayer *time_layer;
 static WeatherLayer *weather_layer;
+
+/* Timers */
+static AppTimer* update_timer;
+static void update_and_animate(void *data);
+
+/* Bluetooth connection */
+static bool bluetooth_connected;
+static bool stale = false;
+void bluetooth_connection_handler(bool connected){
+  bluetooth_connected = connected;
+  if (connected)
+  {
+    APP_LOG(APP_LOG_LEVEL_DEBUG,"Back online. Let's update");
+    if (update_timer != NULL) {
+      app_timer_cancel(update_timer);
+      update_timer = NULL;
+      update_timer = app_timer_register(5000,update_and_animate,NULL);
+    } else {
+      update_timer = app_timer_register(5000,update_and_animate,NULL);
+    }
+    stale = false;
+  } else {
+    stale = true;
+    weather_layer_set_temperature(weather_layer, weather_data->temperature, stale);
+  }
+}
 
 // static char date_text[] = "XXX 00";
 static char time_text[] = "00:00";
@@ -53,7 +79,6 @@ static void animate_update(){
     }
     else {
       // Show the temperature as 'stale' if it has not been updated in 30 minutes
-      bool stale = false;
       if (weather_data->updated > time(NULL) + 1800) {
         stale = true;
       }
@@ -66,6 +91,15 @@ static void animate_update(){
       weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
     }
   }
+}
+
+static void update_and_animate(void *data) {
+  if (bluetooth_connected) {
+    weather_data->updated = 0;
+    animate_update();
+    request_weather(NULL);
+  }
+  update_timer = NULL;
 }
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
@@ -108,9 +142,14 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     text_layer_set_text(date_layer, date_text);
   }
 
-  animate_update();
+  if (bluetooth_connected)
+  {
+    animate_update();
+  } else if (weather_data->updated == 0) {
+    weather_layer_set_icon(weather_layer, WEATHER_ICON_PHONE_ERROR);
+  }
   // Refresh the weather info every 15 minutes
-  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0)
+  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 20) == 0)
   {
     request_weather(NULL);
   }
@@ -118,9 +157,13 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 
 static void tap_handler(AccelAxisType axis, int32_t direction) {
   APP_LOG(APP_LOG_LEVEL_DEBUG,"Received TAP");
-    weather_data->updated = 0;
-    request_weather(NULL);
-    animate_update();
+  if (update_timer != NULL) {
+    app_timer_cancel(update_timer);
+    update_timer = NULL;
+    update_timer = app_timer_register(2000,update_and_animate,NULL);
+  } else {
+    update_timer = app_timer_register(2000,update_and_animate,NULL);
+  }
 }
 
 static void init(void) {
@@ -131,8 +174,8 @@ static void init(void) {
   weather_data = malloc(sizeof(WeatherData));
   init_network(weather_data);
 
-  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FUTURA_18));
-  font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FUTURA_CONDENSED_53));
+  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_UBUNTU_REGULAR_18));
+  font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_UBUNTU_CONDENSED_70));
 
   time_layer = text_layer_create(TIME_FRAME);
   text_layer_set_text_color(time_layer, GColorWhite);
@@ -152,6 +195,9 @@ static void init(void) {
   weather_layer = weather_layer_create(GRect(0, 90, 144, 80));
   layer_add_child(window_get_root_layer(window), weather_layer);
 
+  // Subscribe to the Bluetooth service 
+  bluetooth_connected = bluetooth_connection_service_peek();
+  bluetooth_connection_service_subscribe(bluetooth_connection_handler);
   // Update the screen right away
   time_t now = time(NULL);
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
@@ -165,6 +211,11 @@ static void deinit(void) {
   window_destroy(window);
   tick_timer_service_unsubscribe();
   accel_tap_service_unsubscribe();
+
+  if (update_timer != NULL) {
+     app_timer_cancel(update_timer);
+     update_timer = NULL;
+  }
 
   text_layer_destroy(time_layer);
   text_layer_destroy(date_layer);

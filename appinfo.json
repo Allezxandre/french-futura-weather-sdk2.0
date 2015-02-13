@@ -1,9 +1,9 @@
 {
-  "uuid": "6ebe49d7-bc89-498e-b147-049f49c099ad",
-  "shortName": "Futura Weather",
-  "longName": "Futura Weather",
-  "companyName": "Pebble Community",
-  "versionCode": 8,
+  "uuid": "79dabfb6-e225-462c-879f-859089f0646f",
+  "shortName": "Int'l Weather",
+  "longName": "International Weather",
+  "companyName": "Alexandre Jouandin",
+  "versionCode": 3,
   "versionLabel": "3.0",
   "watchapp": {
     "watchface": true
@@ -11,9 +11,9 @@
   "appKeys": {
     "temperature": 0,
     "condition": 1,
-	"sunrise": 2,
-	"sunset": 3,
-	"current_time": 4,
+	  "sunrise": 2,
+	  "sunset": 3,
+	  "current_time": 4,
     "error": 5,
     "request_update": 42
   },
@@ -92,8 +92,8 @@
       },
       {
         "type": "font",
-        "name": "FUTURA_CONDENSED_53",
-        "file": "fonts/futura_condensed_bold-webfont.ttf"
+        "name": "UBUNTU_CONDENSED_70",
+        "file": "fonts/Ubuntu-C.ttf"
       },
       {
         "type": "png",
@@ -146,10 +146,10 @@
         "file": "images/wind.png"
       },
       {
-        "name": "FUTURA_18",
-        "trackingAdjust": 3,
+        "name": "UBUNTU_REGULAR_18",
+        "trackingAdjust": 2,
         "characterRegex": "[A-Za-z0-9éä ]",
-        "file": "fonts/futura.ttf",
+        "file": "fonts/Ubuntu-R.ttf",
         "type": "font"
       },
       {

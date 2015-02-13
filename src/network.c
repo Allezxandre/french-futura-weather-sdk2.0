@@ -1,6 +1,13 @@
 #include <pebble.h>
 #include "network.h"
 
+// #define DEBUG 1
+#ifndef DEBUG
+  #pragma message "---- COMPILING IN RELEASE MODE ----"
+  #undef APP_LOG
+  #define APP_LOG(...)
+#endif
+
 static void appmsg_in_received(DictionaryIterator *received, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "In received.");
 
