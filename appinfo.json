@@ -4,7 +4,7 @@
   "longName": "International Weather",
   "companyName": "Alexandre Jouandin",
   "versionCode": 3,
-  "versionLabel": "3.0",
+  "versionLabel": "3.1",
   "watchapp": {
     "watchface": true
   },
@@ -91,11 +91,6 @@
         "file": "images/cloud-error.png"
       },
       {
-        "type": "font",
-        "name": "UBUNTU_CONDENSED_70",
-        "file": "fonts/Ubuntu-C.ttf"
-      },
-      {
         "type": "png",
         "name": "ICON_CLEAR_DAY",
         "file": "images/clear-day.png"
@@ -146,24 +141,31 @@
         "file": "images/wind.png"
       },
       {
-        "name": "UBUNTU_REGULAR_18",
+        "type": "font",
+        "name": "SQUARE_63",
+        "trackingAdjust": -2,
+        "characterRegex": "[0-9:]",
+        "file": "fonts/pebble-square.ttf"
+      },
+      {
+        "name": "SQUARE_DEAL_19",
         "trackingAdjust": 2,
         "characterRegex": "[A-Za-z0-9éä ]",
-        "file": "fonts/Ubuntu-R.ttf",
+        "file": "fonts/square-deal.ttf",
         "type": "font"
       },
       {
-        "name": "FUTURA_40",
-        "trackingAdjust": -4,
-        "characterRegex": "[0-9\u00b0 -]",
-        "file": "fonts/futura.ttf",
+        "name": "SQUARE_38",
+        "trackingAdjust": 0,
+        "characterRegex": "[0-9* -]",
+        "file": "fonts/pebble-square.ttf",
         "type": "font"
       },
       {
-        "name": "FUTURA_35",
-        "trackingAdjust": -4,
-        "characterRegex": "[0-9\u00b0 -]",
-        "file": "fonts/futura.ttf",
+        "name": "SQUARE_35",
+        "trackingAdjust": 0,
+        "characterRegex": "[0-9* -]",
+        "file": "fonts/pebble-square.ttf",
         "type": "font"
       }
     ]

@@ -45,3 +45,6 @@ void weather_layer_set_temperature(WeatherLayer* weather_layer, int16_t temperat
 uint8_t weather_icon_for_condition(int condition, bool night_time);
 
 #endif
+
+// Keep pointers to the two fonts we use.
+static GFont large_font, small_font;

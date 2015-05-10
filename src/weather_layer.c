@@ -34,17 +34,14 @@ static uint8_t WEATHER_ICONS[] = {
   RESOURCE_ID_ICON_LOADING3,
 };
 
-// Keep pointers to the two fonts we use.
-static GFont large_font, small_font;
-
 WeatherLayer *weather_layer_create(GRect frame)
 {
   // Create a new layer with some extra space to save our custom Layer infos
   WeatherLayer *weather_layer = layer_create_with_data(frame, sizeof(WeatherLayerData));
   WeatherLayerData *wld = layer_get_data(weather_layer);
 
-  large_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FUTURA_40));
-  small_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FUTURA_35));
+  large_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SQUARE_38));
+  small_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SQUARE_35));
 
   // Add background layer
   wld->temp_layer_background = text_layer_create(GRect(0, 10, 144, 68));
@@ -52,7 +49,7 @@ WeatherLayer *weather_layer_create(GRect frame)
   layer_add_child(weather_layer, text_layer_get_layer(wld->temp_layer_background));
 
   // Add temperature layer
-  wld->temp_layer = text_layer_create(GRect(70, 19, 72, 80));
+  wld->temp_layer = text_layer_create(GRect(70, 23, 72, 80));
   text_layer_set_background_color(wld->temp_layer, GColorClear);
   text_layer_set_text_alignment(wld->temp_layer, GTextAlignmentCenter);
   text_layer_set_font(wld->temp_layer, large_font);
@@ -85,7 +82,7 @@ void weather_layer_set_icon(WeatherLayer* weather_layer, WeatherIcon icon) {
 void weather_layer_set_temperature(WeatherLayer* weather_layer, int16_t t, bool is_stale) {
   WeatherLayerData *wld = layer_get_data(weather_layer);
 
-  snprintf(wld->temp_str, sizeof(wld->temp_str), "%i%s", t, is_stale ? " " : "°");
+  snprintf(wld->temp_str, sizeof(wld->temp_str), "%i%s", t, is_stale ? " " : "*"); // New font -> '°' = '*'
 
   // Temperature between -9° -> 9° or 20° -> 99°
   if ((t >= -9 && t <= 9) || (t >= 20 && t < 100)) {

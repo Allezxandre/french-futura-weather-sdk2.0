@@ -3,7 +3,7 @@
 #include "weather_layer.h"
 #include "network.h"
 
-// #define DEBUG 1
+//#define DEBUG 1
 #ifndef DEBUG
   #pragma message "---- COMPILING IN RELEASE MODE ----"
   #undef APP_LOG
@@ -74,7 +74,7 @@ static void animate_update(){
   } else {
     if (weather_data->error) { // Error -> Update the weather icon and temperature
       weather_layer_set_icon(weather_layer, WEATHER_ICON_PHONE_ERROR);
-      if (bluetooth_connected && (multiplier <= 10)) { // If bluetooth is connected, schedule refresh in 1 minute
+      if (bluetooth_connected && (multiplier <= 5)) { // If bluetooth is connected, schedule refresh in 1 minute
           if (update_timer != NULL) {
             app_timer_cancel(update_timer);
             update_timer = NULL;
@@ -82,7 +82,8 @@ static void animate_update(){
           } else {
             update_timer = app_timer_register(multiplier * 60000,update_and_animate,NULL);
           }
-          multiplier *= 2.5;
+          multiplier *= 5;
+          APP_LOG(APP_LOG_LEVEL_DEBUG,"New multiplier: x%i",multiplier);
       }
     } else { // No Error
       multiplier = 1;
@@ -102,12 +103,12 @@ static void animate_update(){
 }
 
 static void update_and_animate(void *data) {
+  update_timer = NULL;
   if (bluetooth_connected) {
     weather_data->updated = 0;
     animate_update();
     request_weather(NULL);
   }
-  update_timer = NULL;
 }
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
@@ -157,7 +158,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     weather_layer_set_icon(weather_layer, WEATHER_ICON_PHONE_ERROR);
   }
   // Refresh the weather info every 15 minutes
-  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 20) == 0)
+  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 20) == 0 && bluetooth_connected)
   {
     request_weather(NULL);
   }
@@ -182,8 +183,8 @@ static void init(void) {
   weather_data = malloc(sizeof(WeatherData));
   init_network(weather_data);
 
-  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_UBUNTU_REGULAR_18));
-  font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_UBUNTU_CONDENSED_70));
+  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SQUARE_DEAL_19));
+  font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_SQUARE_63));
 
   time_layer = text_layer_create(TIME_FRAME);
   text_layer_set_text_color(time_layer, GColorWhite);
@@ -231,6 +232,8 @@ static void deinit(void) {
 
   fonts_unload_custom_font(font_date);
   fonts_unload_custom_font(font_time);
+  fonts_unload_custom_font(large_font);
+  fonts_unload_custom_font(small_font);
 
   free(weather_data);
 }
